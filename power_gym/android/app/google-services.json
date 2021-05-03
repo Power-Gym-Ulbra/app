@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "344086255178",
+    "project_id": "powergym-11fa6",
+    "storage_bucket": "powergym-11fa6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:344086255178:android:169c4dfbdaf610930678b3",
+        "android_client_info": {
+          "package_name": "com.example.power_gym"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "344086255178-2sin65epsoi7ki2emd3hfr8sisjganlv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.power_gym",
+            "certificate_hash": "d055b381a87787279e5bf185237e8c143a01e29b"
+          }
+        },
+        {
+          "client_id": "344086255178-14jkr6rf23g2lt0nlsai9cflmj5sioer.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASaKWkHp2WdOOZHARdlhPCxx5yTcZ2Rgs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "344086255178-14jkr6rf23g2lt0nlsai9cflmj5sioer.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
