@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.power_gym">
    <application
-        android:label="power_gym"
+        android:label="Power Gym"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

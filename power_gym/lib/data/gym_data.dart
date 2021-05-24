@@ -1,34 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class StudentData {
+class GymData {
 
-  String uid;
   String email;
   String name;
-  String gender;
-  String birthDate;
   String image;
   String acad;
 
-  StudentData();
+  GymData();
 
-  StudentData.fromDocument(DocumentSnapshot document) {
-    uid = document.get('uid');
+  GymData.fromDocument(DocumentSnapshot document) {    
     email = document.get('email');
     name = document.get('name');
-    gender = document.get('gender');
-    birthDate = document.get('birthDate');
     image = document.get('image');
     acad = document.get('acad');
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
       'email': email,
       'name': name,
-      'gender': gender,
-      'birthDate': birthDate,
       'image': image,
       'acad': acad
     };

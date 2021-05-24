@@ -1,30 +1,30 @@
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:power_gym/constants.dart';
-import 'package:power_gym/data/student_data.dart';
-import 'package:power_gym/model/student_model.dart';
+import 'package:power_gym/data/instructor_data.dart';
+import 'package:power_gym/model/instructor_model.dart';
 import 'package:scoped_model/scoped_model.dart';
 
-class CreateStudent extends StatefulWidget {
+import 'dart:io';
+
+class CreateInstructors extends StatefulWidget {
   @override
-  _CreateStudentState createState() => _CreateStudentState();
+  _CreateInstructorsState createState() => _CreateInstructorsState();
 }
 
-class _CreateStudentState extends State<CreateStudent> {
-  String admEmail;
-  String admPass;
-
+class _CreateInstructorsState extends State<CreateInstructors> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
   TextEditingController nameController = TextEditingController();
-  bool _obscure = true;
   String gender = 'masculino';
   bool selected = true;
   DateTime selectedDate;
-
+  File _image;
+  ImagePicker picker = ImagePicker();
+  PickedFile pickedFile;
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +46,9 @@ class _CreateStudentState extends State<CreateStudent> {
           ),
         ),
       ),
-      body: ScopedModel<StudentModel>(
-        model: StudentModel(),
-        child: ScopedModelDescendant<StudentModel>(
+      body: ScopedModel<InstructorModel>(
+        model: InstructorModel(),
+        child: ScopedModelDescendant<InstructorModel>(
           builder: (context, child, model) {
             if (model.isLoading) {
               return Center(child: CircularProgressIndicator());
@@ -66,6 +66,30 @@ class _CreateStudentState extends State<CreateStudent> {
                       padding: const EdgeInsets.all(30),
                       child: ListView(
                         children: [
+                          Column(
+                            children: [
+                              CircleAvatar(
+                                child: Stack(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        getImage(true);
+                                      },
+                                      icon: Icon(Icons.add_a_photo),
+                                      color: gray,
+                                    ),
+                                  ],
+                                ),
+                                maxRadius: size.height * .04,
+                                backgroundImage: pickedFile != null
+                                    ? FileImage(_image)
+                                    : NetworkImage(
+                                        'https://firebasestorage.googleapis.com/v0/b/powergym-11fa6.appspot.com/o/user.png?alt=media&token=a7b34968-2285-40ad-8929-713bac8b132c',
+                                      ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: size.height * .01),
                           birthday(context),
                           SizedBox(height: size.height * .01),
                           TextFormField(
@@ -98,88 +122,6 @@ class _CreateStudentState extends State<CreateStudent> {
                             },
                           ),
                           SizedBox(height: size.height * .05),
-                          TextFormField(
-                            controller: emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            style: GoogleFonts.poppins(
-                              textStyle: TextStyle(
-                                color: white,
-                              ),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Email',
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: white,
-                                ),
-                              ),
-                              hintStyle: TextStyle(
-                                color: white,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.email,
-                                color: white,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null ||
-                                  value.isEmpty ||
-                                  !value.contains('@')) {
-                                return 'Email inválido ou incorreto';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: size.height * .05),
-                          TextFormField(
-                            controller: passController,
-                            obscureText: _obscure,
-                            style: GoogleFonts.poppins(
-                              textStyle: TextStyle(
-                                color: white,
-                              ),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Senha',
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: white,
-                                ),
-                              ),
-                              hintStyle: TextStyle(
-                                color: white,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.lock,
-                                color: white,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: _obscure
-                                    ? Icon(Icons.visibility, color: white)
-                                    : Icon(Icons.visibility_off, color: white),
-                                onPressed: () {
-                                  setState(
-                                    () {
-                                      if (_obscure == true) {
-                                        _obscure = false;
-                                      } else {
-                                        _obscure = true;
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null ||
-                                  value.isEmpty ||
-                                  value.length < 8) {
-                                return 'Senha inválida ou menor que 8 caracteres';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: size.height * .09),
                           _genderSelect(),
                           SizedBox(height: size.height * .09),
                           buttonSubmit(model),
@@ -196,41 +138,40 @@ class _CreateStudentState extends State<CreateStudent> {
     );
   }
 
-  Container buttonSubmit(StudentModel model) {
-    final arguments = ModalRoute.of(context).settings.arguments as Map;
+  Container buttonSubmit(InstructorModel model) {
     return Container(
       height: 48,
       width: 277,
       child: ElevatedButton(
         onPressed: () async {
           if (_formKey.currentState.validate() && selectedDate != null) {
-            StudentData studentData = StudentData();
-            studentData.name = nameController.text;
-            studentData.email = emailController.text;
-            studentData.acad = '0';
-            studentData.gender = gender;
-            studentData.image = '';
-            studentData.birthDate =
+            InstructorData instructorData = InstructorData();
+            instructorData.name = nameController.text;
+            instructorData.gender = gender;
+            instructorData.image = '';
+            instructorData.birthday =
                 '${DateFormat('dd/MM/y').format(selectedDate)}';
 
-            Map<String, dynamic> userData = {
-              'name': nameController.text,
-              'email': emailController.text,
-              'acad': '0',
-              'gender': gender,
-              'image': '',
-              'birthDate': '${DateFormat('dd/MM/y').format(selectedDate)}'
-            };
+            if (_image != null) {
+              model.uploadFile(_image, instructorData.name);
 
-            model.createStudentFinal(
-              userData: userData,
-              pass: passController.text,
-              onSuccess: _onSuccess,
-              onFail: _onFail,
-              studentData: studentData,
-              admEmail: arguments['admEmail'],
-              admPass: arguments['admPass'],
-            );
+              Future.delayed(Duration(seconds: 5)).then((value) {
+                FirebaseStorage storageReference = FirebaseStorage.instance;
+                Reference ref = storageReference
+                    .ref()
+                    .child('instructors')
+                    .child(nameController.text)
+                    .child('${_image.path}');
+
+                ref.getDownloadURL().then((value) {
+                  instructorData.image = value;
+                });
+              });
+
+              Future.delayed(Duration(seconds: 10)).then((value) {
+                model.saveInstructor(instructorData, _onSuccess, _onFail);
+              });
+            }
           }
         },
         style: ButtonStyle(
@@ -254,54 +195,6 @@ class _CreateStudentState extends State<CreateStudent> {
           ),
         ),
       ),
-    );
-  }
-
-  Column birthday(BuildContext context) {
-    return Column(
-      children: [
-        Center(
-          child: Text(
-            'Data de Nascimento',
-            style: GoogleFonts.poppins(
-              textStyle: TextStyle(
-                color: yellow,
-                fontSize: 24,
-              ),
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            showDatePicker(
-              context: context,
-              initialDate: DateTime.now(),
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-              locale: Locale('pt', 'BR'),
-            ).then((pickedDate) {
-              if (pickedDate == null) {
-                return;
-              }
-
-              setState(() {
-                selectedDate = pickedDate;
-              });
-            });
-          },
-          child: Text(
-            selectedDate == null
-                ? 'Selecione uma Data!'
-                : '${DateFormat('dd/MM/y').format(selectedDate)}',
-            style: GoogleFonts.poppins(
-              textStyle: TextStyle(
-                color: selectedDate == null ? facebook : yellow,
-                fontSize: 18,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -377,18 +270,87 @@ class _CreateStudentState extends State<CreateStudent> {
     );
   }
 
+  Column birthday(BuildContext context) {
+    return Column(
+      children: [
+        Center(
+          child: Text(
+            'Data de Nascimento',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                color: yellow,
+                fontSize: 24,
+              ),
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            showDatePicker(
+              context: context,
+              initialDate: DateTime.now(),
+              firstDate: DateTime(1900),
+              lastDate: DateTime.now(),
+              locale: Locale('pt', 'BR'),
+            ).then((pickedDate) {
+              if (pickedDate == null) {
+                return;
+              }
+
+              setState(() {
+                selectedDate = pickedDate;
+              });
+            });
+          },
+          child: Text(
+            selectedDate == null
+                ? 'Selecione uma Data!'
+                : '${DateFormat('dd/MM/y').format(selectedDate)}',
+            style: GoogleFonts.poppins(
+              textStyle: TextStyle(
+                color: selectedDate == null ? facebook : yellow,
+                fontSize: 18,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future getImage(bool gallery) async {
+
+    // Let user select photo from gallery
+    if (gallery) {
+      pickedFile = await picker.getImage(
+        source: ImageSource.gallery,
+      );
+    }
+    // Otherwise open camera to get new photo
+    else {
+      pickedFile = await picker.getImage(
+        source: ImageSource.camera,
+      );
+    }
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      }
+    });
+  }
+
   void _onSuccess() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Aluno criado com sucesso!',
+          'Instrutor criado com sucesso!',
           style: GoogleFonts.poppins(),
         ),
         backgroundColor: Colors.greenAccent,
         duration: Duration(seconds: 2),
       ),
     );
-    StudentModel();
     Navigator.pop(context);
   }
 

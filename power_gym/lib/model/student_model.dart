@@ -1,11 +1,17 @@
+import 'dart:io';
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:power_gym/data/student_data.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class StudentModel extends Model {
   FirebaseAuth _auth = FirebaseAuth.instance;
+  DocumentReference usersRef =
+      FirebaseFirestore.instance.collection('users').doc();
 
   String id;
   User currentUser;
@@ -21,10 +27,6 @@ class StudentModel extends Model {
 
   List<StudentData> students = [];
 
-  StudentModel() {
-    _loadStudents();
-  }
-
   static StudentModel of(BuildContext context) =>
       ScopedModel.of<StudentModel>(context);
 
@@ -34,18 +36,25 @@ class StudentModel extends Model {
     notifyListeners();
   }
 
-  void createStudentFinal(
-      {@required Map<String, dynamic> userData,
-      @required String pass,
-      @required VoidCallback onSuccess,
-      @required VoidCallback onFail,
-      @required StudentData studentData}) {
+  StudentModel() {
+    loadStudents();
+  }
+  
+  void createStudentFinal({
+    @required Map<String, dynamic> userData,
+    @required String pass,
+    @required VoidCallback onSuccess,
+    @required VoidCallback onFail,
+    @required StudentData studentData,
+    @required String admEmail,
+    @required String admPass,
+  }) {
     isLoading = true;
     notifyListeners();
 
     nowId = currentUser.uid;
-    nowEmail = currentUser.email;
-    nowPass = '123456789';
+    nowEmail = admEmail;
+    nowPass = admPass;
 
     _auth
         .createUserWithEmailAndPassword(
@@ -54,6 +63,8 @@ class StudentModel extends Model {
     )
         .then((user) async {
       id = user.user.uid;
+
+      studentData.uid = id;
 
       _saveStudent(studentData);
       onSuccess();
@@ -65,6 +76,126 @@ class StudentModel extends Model {
       notifyListeners();
     });
     signOut();
+  }
+
+  void updateStudentWithPicture(
+    StudentData student,
+    VoidCallback onSuccess,
+    VoidCallback onFail,
+  ) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(student.uid)
+          .update(student.toMap());
+
+      await FirebaseFirestore.instance
+          .collection('students')
+          .doc(student.uid)
+          .update(student.toMap());
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('students')
+          .doc(student.uid)
+          .update(student.toMap());
+
+      onSuccess();
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      onFail();
+      isLoading = false;
+      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  void updateStudentWithoutPicture(
+    StudentData student,
+    VoidCallback onSuccess,
+    VoidCallback onFail,
+  ) {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(student.uid)
+          .update(student.toMap());
+
+      FirebaseFirestore.instance
+          .collection('students')
+          .doc(student.uid)
+          .update(student.toMap());
+
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('students')
+          .doc(student.uid)
+          .update(student.toMap());
+      onSuccess();
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      onFail();
+      isLoading = false;
+      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  void deleteStudent(
+    String uid,
+    VoidCallback onSuccess,
+    VoidCallback onFail,
+  ) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+
+      await FirebaseFirestore.instance.collection('students').doc(uid).delete();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('students')
+          .doc(uid)
+          .delete();
+
+      onSuccess();
+      isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      onFail();
+      isLoading = false;
+      notifyListeners();
+    }
+    notifyListeners();
+  }
+
+  void uploadFile(File _image, String uid) async {
+    isLoading = true;
+    notifyListeners();
+
+    FirebaseStorage storageReference = FirebaseStorage.instance;
+    Reference ref = storageReference
+        .ref()
+        .child('users')
+        .child('$uid')
+        .child('${_image.path}');
+    UploadTask uploadTask = ref.putFile(_image);
+    await uploadTask;
+
+    return;
   }
 
   void signOut() async {
@@ -106,7 +237,7 @@ class StudentModel extends Model {
         .set(studentData.toMap());
   }
 
-  void _loadStudents() async {
+  void loadStudents() async {
     currentUser = _auth.currentUser;
     QuerySnapshot query = await FirebaseFirestore.instance
         .collection('users')

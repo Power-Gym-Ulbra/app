@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _pageController = PageController();
-  
+
   @override
   Widget build(BuildContext context) {
     return ScopedModel<UserModel>(
@@ -26,6 +26,10 @@ class _HomePageState extends State<HomePage> {
         builder: (context, child, model) {
           if (model.isLoading) {
             return Center(child: CircularProgressIndicator());
+          } else if (model.userData['acad'] == null) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
           } else {
             if (model.userData['acad'] == '1') {
               return PageView(
@@ -76,7 +80,14 @@ class _HomePageState extends State<HomePage> {
                         size: 30,
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(context, '/createStudent');
+                        Navigator.pushNamed(
+                          context,
+                          '/createStudent',
+                          arguments: {
+                            'admEmail': model.userData['email'],
+                            'admPass': model.userData['pass'],
+                          },
+                        );
                       },
                     ),
                     drawer: MyDrawerGym(_pageController),
@@ -97,6 +108,20 @@ class _HomePageState extends State<HomePage> {
                       elevation: 0,
                       backgroundColor: yellow,
                     ),
+                    floatingActionButton: FloatingActionButton(
+                      backgroundColor: yellow,
+                      child: Icon(
+                        Icons.add,
+                        color: gray,
+                        size: 30,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/createInstructors',
+                        );
+                      },
+                    ),
                     body: InstructorsTab(),
                     drawer: MyDrawerGym(_pageController),
                   ),
@@ -112,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                     appBar: AppBar(
                       centerTitle: true,
                       title: Text(
-                        model.userData['name'],
+                        'Student',
                         style: GoogleFonts.poppins(
                           textStyle: TextStyle(
                             color: gray,

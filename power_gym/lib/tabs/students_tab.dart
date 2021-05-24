@@ -11,10 +11,17 @@ class StudentsTabGym extends StatefulWidget {
 }
 
 class _StudenstTabGymState extends State<StudentsTabGym> {
+  StudentModel studentModel = StudentModel();
+
+  @override
+  void initState() {
+    studentModel.loadStudents();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -26,47 +33,68 @@ class _StudenstTabGymState extends State<StudentsTabGym> {
           ),
           ScopedModel(
             model: StudentModel(),
-            child: ScopedModelDescendant<StudentModel>(
-              builder: (context, child, model) {
-                if (model.isLoading) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (model.students == null || model.students.length == 0) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                } else {
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: model.students.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(
-                            model.students[index].name,
-                            style: GoogleFonts.poppins(
+            child: Expanded(
+              child: ScopedModelDescendant<StudentModel>(
+                  rebuildOnChange: true,
+                  builder: (context, child, model) {
+                    if (model.isLoading) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (model.students.isEmpty ||
+                        model.students.length == 0) {
+                      return Center(
+                        child: Text(
+                          'Nenhum aluno cadastrado',
+                          style: GoogleFonts.poppins(
                               textStyle: TextStyle(
-                                color: white,
+                            color: white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          )),
+                        ),
+                      );
+                    }
+                    final listStudents = model.students;
+
+                    return ListView.builder(
+                      itemCount: listStudents.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/perfilStudent',
+                              arguments: {
+                                'student': listStudents[index],
+                              },
+                            );
+                          },
+                          child: ListTile(
+                            title: Text(
+                              listStudents[index].name,
+                              style: GoogleFonts.poppins(
+                                textStyle: TextStyle(
+                                  color: white,
+                                ),
                               ),
                             ),
-                          ),
-                          leading: CircleAvatar(
-                            backgroundImage: model.students[index].image == ""
-                                ? NetworkImage(
-                                    'https://firebasestorage.googleapis.com/v0/b/powergym-11fa6.appspot.com/o/user.png?alt=media&token=a7b34968-2285-40ad-8929-713bac8b132c',
-                                  )
-                                : NetworkImage(
-                                    "${model.students[index].image}",
-                                  ),
-                          ),
-                          trailing: Icon(
-                            Icons.arrow_forward_ios,
-                            color: white,
+                            leading: CircleAvatar(
+                              backgroundImage: listStudents[index].image == ""
+                                  ? NetworkImage(
+                                      'https://firebasestorage.googleapis.com/v0/b/powergym-11fa6.appspot.com/o/user.png?alt=media&token=a7b34968-2285-40ad-8929-713bac8b132c',
+                                    )
+                                  : NetworkImage(
+                                      "${listStudents[index].image}",
+                                    ),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: white,
+                            ),
                           ),
                         );
                       },
-                    ),
-                  );
-                }
-              },
+                    );
+                  }),
             ),
           ),
         ],

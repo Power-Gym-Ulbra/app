@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,10 +31,19 @@ class _HomeTabGymState extends State<HomeTabGym> {
               builder: (context, child, model) {
                 if (model.isLoading) {
                   return Center(child: CircularProgressIndicator());
-                } else if (model.students == null ||
+                } else if (model.students.isEmpty ||
                     model.students.length == 0) {
                   return Center(
-                    child: CircularProgressIndicator(),
+                    child: Text(
+                      'Nenhum aluno cadastrado',
+                      style: GoogleFonts.poppins(
+                        textStyle: TextStyle(
+                          color: white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        )
+                      ),
+                    ),
                   );
                 } else {
                   return Expanded(
