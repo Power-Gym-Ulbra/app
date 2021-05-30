@@ -116,42 +116,43 @@ class _MyDrawerGymState extends State<MyDrawerGym> {
             ),
           ),
           Container(
-              color: gray,
-              child: ScopedModel(
-                model: UserModel(),
-                child: ScopedModelDescendant<UserModel>(
-                  builder: (context, child, model) {
-                    return Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.exit_to_app,
+            color: gray,
+            child: ScopedModel(
+              model: UserModel(),
+              child: ScopedModelDescendant<UserModel>(
+                builder: (context, child, model) {
+                  return Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.exit_to_app,
+                          color: yellow,
+                        ),
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => IntroScreen(),
+                            ),
+                            (route) => false,
+                          );
+                          model.signOut();
+                        },
+                      ),
+                      Text(
+                        'Sair',
+                        style: GoogleFonts.poppins(
+                          textStyle: TextStyle(
                             color: yellow,
                           ),
-                          onPressed: () {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => IntroScreen(),
-                              ),
-                              (route) => false,
-                            );
-                            model.signOut();
-                          },
                         ),
-                        Text(
-                          'Sair',
-                          style: GoogleFonts.poppins(
-                            textStyle: TextStyle(
-                              color: yellow,
-                            ),
-                          ),
-                        )
-                      ],
-                    );
-                  },
-                ),
-              )),
+                      )
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );

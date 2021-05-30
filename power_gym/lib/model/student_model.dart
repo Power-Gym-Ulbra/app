@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:power_gym/data/student_data.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -10,22 +11,21 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 class StudentModel extends Model {
   FirebaseAuth _auth = FirebaseAuth.instance;
-  DocumentReference usersRef =
-      FirebaseFirestore.instance.collection('users').doc();
 
-  String id;
   User currentUser;
-
-  //adm
-  String nowId;
-  String nowEmail;
-  String nowPass;
 
   Map<String, dynamic> userData = Map();
 
   bool isLoading = false;
 
-  List<StudentData> students = [];
+  List<StudentData> _students = [];
+
+  List<StudentData> get students => _students.toList();
+
+  set _listStudents(List<StudentData> value) {
+    _students = value;
+    notifyListeners();
+  }
 
   static StudentModel of(BuildContext context) =>
       ScopedModel.of<StudentModel>(context);
@@ -33,49 +33,77 @@ class StudentModel extends Model {
   @override
   void addListener(VoidCallback listener) {
     super.addListener(listener);
-    notifyListeners();
-  }
-
-  StudentModel() {
+    // update data for every subscriber, especially for the first one
     loadStudents();
   }
-  
-  void createStudentFinal({
-    @required Map<String, dynamic> userData,
-    @required String pass,
-    @required VoidCallback onSuccess,
-    @required VoidCallback onFail,
-    @required StudentData studentData,
-    @required String admEmail,
-    @required String admPass,
-  }) {
-    isLoading = true;
-    notifyListeners();
 
-    nowId = currentUser.uid;
-    nowEmail = admEmail;
-    nowPass = admPass;
+  Future<UserCredential> registerStudentFinal(
+    String email,
+    String password,
+    StudentData studentData,
+    Map<String, dynamic> userData,
+    VoidCallback onSuccess,
+    VoidCallback onFail,
+  ) async {
+    UserCredential userCredential;
 
-    _auth
-        .createUserWithEmailAndPassword(
-      email: userData['email'],
-      password: pass,
-    )
-        .then((user) async {
-      id = user.user.uid;
+    try {
+      isLoading = true;
+      notifyListeners();
 
-      studentData.uid = id;
+      FirebaseApp app = await Firebase.initializeApp(
+        name: 'Secondary',
+        options: Firebase.app().options,
+      );
+      try {
+        userCredential = await FirebaseAuth.instanceFor(app: app)
+            .createUserWithEmailAndPassword(email: email, password: password);
+      } on FirebaseAuthException catch (e) {
+        print('ERROR' + e.toString());
+      }
 
-      _saveStudent(studentData);
+      await app.delete();
+
+      await Firebase.initializeApp();
+
+      studentData.uid = userCredential.user.uid;
+
+      await _saveStudent(studentData);
+
       onSuccess();
       isLoading = false;
       notifyListeners();
-    }).catchError((e) {
+    } catch (e) {
       onFail();
       isLoading = false;
+      print('erro');
       notifyListeners();
+    }
+
+    return Future.sync(
+      () => userCredential,
+    );
+  }
+
+  Future<void> _saveStudent(StudentData studentData) async {
+    await Future.wait([
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(studentData.uid)
+          .set(studentData.toMap()),
+      FirebaseFirestore.instance
+          .collection('students')
+          .doc(studentData.uid)
+          .set(studentData.toMap()),
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('students')
+          .doc(studentData.uid)
+          .set(studentData.toMap()),
+    ]).whenComplete(() {
+      loadStudents();
     });
-    signOut();
   }
 
   void updateStudentWithPicture(
@@ -153,29 +181,28 @@ class StudentModel extends Model {
 
   void deleteStudent(
     String uid,
-    VoidCallback onSuccess,
-    VoidCallback onFail,
   ) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+      Future.wait([
+        FirebaseFirestore.instance.collection('users').doc(uid).delete(),
+        FirebaseFirestore.instance.collection('students').doc(uid).delete(),
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('students')
+            .doc(uid)
+            .delete(),
+      ]).whenComplete(() {
+        loadStudents();
+      });
 
-      await FirebaseFirestore.instance.collection('students').doc(uid).delete();
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('students')
-          .doc(uid)
-          .delete();
-
-      onSuccess();
+      print('deleted');
       isLoading = false;
       notifyListeners();
     } catch (e) {
-      onFail();
       isLoading = false;
       notifyListeners();
     }
@@ -198,45 +225,6 @@ class StudentModel extends Model {
     return;
   }
 
-  void signOut() async {
-    await _auth.signOut();
-
-    userData = Map();
-    currentUser = null;
-
-    notifyListeners();
-
-    await _auth
-        .signInWithEmailAndPassword(
-      email: nowEmail,
-      password: nowPass,
-    )
-        .then((user) {
-      currentUser = user.user;
-
-      loadCurrentUser();
-    });
-  }
-
-  Future<void> _saveStudent(StudentData studentData) async {
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(id)
-        .set(studentData.toMap());
-
-    FirebaseFirestore.instance
-        .collection('students')
-        .doc(id)
-        .set(studentData.toMap());
-
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(nowId)
-        .collection('students')
-        .doc(id)
-        .set(studentData.toMap());
-  }
-
   void loadStudents() async {
     currentUser = _auth.currentUser;
     QuerySnapshot query = await FirebaseFirestore.instance
@@ -245,23 +233,7 @@ class StudentModel extends Model {
         .collection('students')
         .get();
 
-    students = query.docs.map((doc) => StudentData.fromDocument(doc)).toList();
-    notifyListeners();
-  }
-
-  Future<Null> loadCurrentUser() async {
-    if (currentUser == null) {
-      currentUser = _auth.currentUser;
-    }
-    if (currentUser != null) {
-      if (userData['name'] == null) {
-        DocumentSnapshot docUser = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-        userData = docUser.data();
-      }
-    }
-    notifyListeners();
+    _listStudents =
+        query.docs.map((doc) => StudentData.fromDocument(doc)).toList();
   }
 }

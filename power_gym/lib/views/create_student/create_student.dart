@@ -13,9 +13,6 @@ class CreateStudent extends StatefulWidget {
 }
 
 class _CreateStudentState extends State<CreateStudent> {
-  String admEmail;
-  String admPass;
-
   final _formKey = GlobalKey<FormState>();
   TextEditingController emailController = TextEditingController();
   TextEditingController passController = TextEditingController();
@@ -24,7 +21,6 @@ class _CreateStudentState extends State<CreateStudent> {
   String gender = 'masculino';
   bool selected = true;
   DateTime selectedDate;
-
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +42,16 @@ class _CreateStudentState extends State<CreateStudent> {
           ),
         ),
       ),
-      body: ScopedModel<StudentModel>(
+      body: ScopedModel(
         model: StudentModel(),
         child: ScopedModelDescendant<StudentModel>(
           builder: (context, child, model) {
             if (model.isLoading) {
-              return Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(),
+              );
             }
+
             return Column(
               children: [
                 SvgPicture.asset(
@@ -197,46 +196,45 @@ class _CreateStudentState extends State<CreateStudent> {
   }
 
   Container buttonSubmit(StudentModel model) {
-    final arguments = ModalRoute.of(context).settings.arguments as Map;
     return Container(
       height: 48,
       width: 277,
       child: ElevatedButton(
-        onPressed: () async {
-          if (_formKey.currentState.validate() && selectedDate != null) {
-            StudentData studentData = StudentData();
-            studentData.name = nameController.text;
-            studentData.email = emailController.text;
-            studentData.acad = '0';
-            studentData.gender = gender;
-            studentData.image = '';
-            studentData.birthDate =
-                '${DateFormat('dd/MM/y').format(selectedDate)}';
+        onPressed: selectedDate == null
+            ? null
+            : () async {
+                if (_formKey.currentState.validate()) {
+                  StudentData studentData = StudentData();
+                  studentData.name = nameController.text;
+                  studentData.email = emailController.text;
+                  studentData.acad = '0';
+                  studentData.gender = gender;
+                  studentData.image = '';
+                  studentData.birthDate =
+                      '${DateFormat('dd/MM/y').format(selectedDate)}';
 
-            Map<String, dynamic> userData = {
-              'name': nameController.text,
-              'email': emailController.text,
-              'acad': '0',
-              'gender': gender,
-              'image': '',
-              'birthDate': '${DateFormat('dd/MM/y').format(selectedDate)}'
-            };
+                  Map<String, dynamic> userData = {
+                    'name': nameController.text,
+                    'email': emailController.text,
+                    'acad': '0',
+                    'gender': gender,
+                    'image': '',
+                    'birthDate': '${DateFormat('dd/MM/y').format(selectedDate)}'
+                  };
 
-            model.createStudentFinal(
-              userData: userData,
-              pass: passController.text,
-              onSuccess: _onSuccess,
-              onFail: _onFail,
-              studentData: studentData,
-              admEmail: arguments['admEmail'],
-              admPass: arguments['admPass'],
-            );
-          }
-        },
+                  model.registerStudentFinal(
+                    emailController.text,
+                    passController.text,
+                    studentData,
+                    userData,
+                    _onSuccess,
+                    _onFail,
+                  );
+                }
+              },
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.all<Color>(
-            yellow,
-          ),
+              selectedDate == null ? null : yellow),
           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(32.0),
@@ -388,7 +386,6 @@ class _CreateStudentState extends State<CreateStudent> {
         duration: Duration(seconds: 2),
       ),
     );
-    StudentModel();
     Navigator.pop(context);
   }
 

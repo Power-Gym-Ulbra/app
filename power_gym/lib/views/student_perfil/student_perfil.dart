@@ -76,8 +76,6 @@ class _StudentPerfilState extends State<StudentPerfil> {
                         onPressed: () {
                           model.deleteStudent(
                             arguments['student'].uid,
-                            _onSuccess,
-                            _onFail,
                           );
                           Navigator.pop(context);
                         },

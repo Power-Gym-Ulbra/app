@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:power_gym/model/student_model.dart';
 import 'package:power_gym/model/user_model.dart';
 import 'package:power_gym/tabs/students_tab.dart';
 import 'package:power_gym/views/create_instructors/create_instructors.dart';
@@ -27,45 +28,52 @@ class MyApp extends StatelessWidget {
       model: UserModel(),
       child: ScopedModelDescendant<UserModel>(
         builder: (context, child, model) {
-          return MaterialApp(
-            localizationsDelegates: [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate
-            ],
-            supportedLocales: [
-              const Locale('pt', 'BR'),
-              const Locale('en'),
-            ],
-            debugShowCheckedModeBanner: false,
-            title: 'Power Gym',
-            theme: ThemeData(
-              primarySwatch: Colors.yellow,
-            ),
-            initialRoute: '/',
-            routes: {
-              '/': (context) => FutureBuilder(
-                    future: model.isLoaggedInFuture(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData)
-                        return Center(child: CircularProgressIndicator());
-
-                      if (!model.isLoaggedIn()) {
-                        return IntroScreen();
-                      } else {
-                        return HomePage();
-                      }
-                    },
+          return ScopedModel(
+            model: StudentModel(),
+            child: ScopedModelDescendant<StudentModel>(
+              builder: (context, child, modelStudent) {
+                return MaterialApp(
+                  localizationsDelegates: [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate
+                  ],
+                  supportedLocales: [
+                    const Locale('pt', 'BR'),
+                    const Locale('en'),
+                  ],
+                  debugShowCheckedModeBanner: false,
+                  title: 'Power Gym',
+                  theme: ThemeData(
+                    primarySwatch: Colors.yellow,
                   ),
-              '/login': (context) => LoginPage(),
-              '/signup': (context) => SignUpPage(),
-              '/home': (context) => HomePage(),
-              '/resetPass': (context) => ResetPassword(),
-              '/students': (context) => StudentsTabGym(),
-              '/createStudent': (context) => CreateStudent(),
-              '/perfilStudent': (context) => StudentPerfil(),
-              '/editStudent': (context) => EditStudent(),
-              '/createInstructors': (context) => CreateInstructors()
-            },
+                  initialRoute: '/',
+                  routes: {
+                    '/': (context) => FutureBuilder(
+                          future: model.isLoaggedInFuture(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData)
+                              return Center(child: CircularProgressIndicator());
+
+                            if (!model.isLoaggedIn()) {
+                              return IntroScreen();
+                            } else {
+                              return HomePage();
+                            }
+                          },
+                        ),
+                    '/login': (context) => LoginPage(),
+                    '/signup': (context) => SignUpPage(),
+                    '/home': (context) => HomePage(),
+                    '/resetPass': (context) => ResetPassword(),
+                    '/students': (context) => StudentsTabGym(),
+                    '/createStudent': (context) => CreateStudent(),
+                    '/perfilStudent': (context) => StudentPerfil(),
+                    '/editStudent': (context) => EditStudent(),
+                    '/createInstructors': (context) => CreateInstructors()
+                  },
+                );
+              },
+            ),
           );
         },
       ),
