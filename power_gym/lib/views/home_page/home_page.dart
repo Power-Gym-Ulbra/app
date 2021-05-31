@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:power_gym/constants.dart';
-import 'package:power_gym/data/student_data.dart';
 import 'package:power_gym/model/student_model.dart';
 import 'package:power_gym/model/user_model.dart';
 import 'package:power_gym/tabs/home_tab.dart';
@@ -11,7 +9,6 @@ import 'package:power_gym/tabs/instructors_tab.dart';
 import 'package:power_gym/tabs/students_tab.dart';
 import 'package:power_gym/widget/drawer.dart';
 import 'package:power_gym/widget/drawer_student.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,14 +17,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final pageController = PageController();
-  DateTime selectedDate;
-  final _formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
-  TextEditingController nameController = TextEditingController();
-  String gender = 'masculino';
-  bool selected = true;
+  final _pageController = PageController();
+  
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +39,7 @@ class _HomePageState extends State<HomePage> {
                 child: ScopedModelDescendant<StudentModel>(
                   builder: (context, child, model) {
                     return PageView(
-                      controller: pageController,
+                      controller: _pageController,
                       physics: NeverScrollableScrollPhysics(),
                       children: [
                         Scaffold(
@@ -68,7 +59,7 @@ class _HomePageState extends State<HomePage> {
                             backgroundColor: yellow,
                           ),
                           body: HomeTabGym(),
-                          drawer: MyDrawerGym(pageController),
+                          drawer: MyDrawerGym(_pageController),
                         ),
                         Scaffold(
                           backgroundColor: gray,
@@ -91,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                               return StudentsTabGym();
                             },
                           ),
-                          drawer: MyDrawerGym(pageController),
+                          drawer: MyDrawerGym(_pageController),
                         ),
                         Scaffold(
                           backgroundColor: gray,
@@ -109,19 +100,8 @@ class _HomePageState extends State<HomePage> {
                             elevation: 0,
                             backgroundColor: yellow,
                           ),
-                          floatingActionButton: FloatingActionButton(
-                            backgroundColor: yellow,
-                            child: Icon(
-                              Icons.add,
-                              color: gray,
-                              size: 30,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/createInstructor');
-                            },
-                          ),
                           body: InstructorsTab(),
-                          drawer: MyDrawerGym(pageController),
+                          drawer: MyDrawerGym(_pageController),
                         ),
                       ],
                     );
@@ -130,7 +110,7 @@ class _HomePageState extends State<HomePage> {
               );
             } else {
               return PageView(
-                controller: pageController,
+                controller: _pageController,
                 physics: NeverScrollableScrollPhysics(),
                 children: [
                   Scaffold(
@@ -150,7 +130,7 @@ class _HomePageState extends State<HomePage> {
                       backgroundColor: yellow,
                     ),
                     body: HomeTabStudent(),
-                    drawer: MyDrawerStudent(pageController),
+                    drawer: MyDrawerStudent(_pageController),
                   ),
                 ],
               );

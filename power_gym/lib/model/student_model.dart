@@ -115,22 +115,26 @@ class StudentModel extends Model {
       isLoading = true;
       notifyListeners();
 
-      await FirebaseFirestore.instance
+      Future.wait([
+         FirebaseFirestore.instance
           .collection('users')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
 
-      await FirebaseFirestore.instance
+       FirebaseFirestore.instance
           .collection('students')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
 
-      await FirebaseFirestore.instance
+       FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser.uid)
           .collection('students')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
+      ]).whenComplete(() {
+        loadStudents();
+      });
 
       onSuccess();
       isLoading = false;
@@ -152,22 +156,27 @@ class StudentModel extends Model {
       isLoading = true;
       notifyListeners();
 
-      FirebaseFirestore.instance
+      Future.wait([
+        FirebaseFirestore.instance
           .collection('users')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
 
       FirebaseFirestore.instance
           .collection('students')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
 
       FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser.uid)
           .collection('students')
           .doc(student.uid)
-          .update(student.toMap());
+          .update(student.toMap()),
+      ]).whenComplete(() {
+        loadStudents();
+      });
+      
       onSuccess();
       isLoading = false;
       notifyListeners();

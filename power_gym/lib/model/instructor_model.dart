@@ -11,15 +11,25 @@ import 'package:scoped_model/scoped_model.dart';
 class InstructorModel extends Model {
   FirebaseAuth _auth = FirebaseAuth.instance;
 
-  List<InstructorData> instructors = [];
+  List<InstructorData> _instructors = [];
+
+  List<InstructorData> get instructors => _instructors.toList();
+
+  set _listInstructors(List<InstructorData> value) {
+    _instructors = value;
+    notifyListeners();
+  }
+
+  static InstructorModel of(BuildContext context) =>
+      ScopedModel.of<InstructorModel>(context);
 
   @override
   void addListener(VoidCallback listener) {
     super.addListener(listener);
-    notifyListeners();
+    loadInstructors();
   }
 
-  InstructorModel(){
+  InstructorModel() {
     loadInstructors();
   }
 
@@ -31,20 +41,23 @@ class InstructorModel extends Model {
       isLoading = true;
       notifyListeners();
 
-      await FirebaseFirestore.instance
-          .collection('instructors')
-          .add(instructorData.toMap())
-          .then((value) {
-        instructorData.uid = value.id;
-      });
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_auth.currentUser.uid)
-          .collection('instructors')
-          .add(instructorData.toMap())
-          .then((value) {
-        instructorData.uid = value.id;
+      Future.wait([
+        FirebaseFirestore.instance
+            .collection('instructors')
+            .add(instructorData.toMap())
+            .then((value) {
+          instructorData.uid = value.id;
+        }),
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(_auth.currentUser.uid)
+            .collection('instructors')
+            .add(instructorData.toMap())
+            .then((value) {
+          instructorData.uid = value.id;
+        }),
+      ]).then((value) {
+        loadInstructors();
       });
 
       onSuccess();
@@ -80,7 +93,8 @@ class InstructorModel extends Model {
         .collection('instructors')
         .get();
 
-    instructors = query.docs.map((doc) => InstructorData.fromDocument(doc)).toList();
+    _listInstructors =
+        query.docs.map((doc) => InstructorData.fromDocument(doc)).toList();
     notifyListeners();
   }
 }

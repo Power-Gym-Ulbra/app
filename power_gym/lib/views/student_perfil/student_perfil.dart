@@ -162,32 +162,4 @@ class _StudentPerfilState extends State<StudentPerfil> {
       ),
     );
   }
-
-  void _onSuccess() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Aluno excluido com sucesso',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: Colors.greenAccent,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    StudentModel();
-    Navigator.pop(context);
-  }
-
-  void _onFail() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Algo deu Errado!',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: Colors.redAccent,
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
 }
